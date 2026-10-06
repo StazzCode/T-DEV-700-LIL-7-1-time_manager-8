@@ -1,0 +1,23 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      target: dev
+    env_file: .env
+    ports: ["3000:3000"]
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    environment:
+      API_URL: http://backend:3000
+      VITE_NEON_AUTH_URL: ${NEON_AUTH_URL}
+    ports: ["5173:5173"]
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on: [backend]
