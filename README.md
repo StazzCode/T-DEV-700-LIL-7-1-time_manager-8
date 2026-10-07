@@ -39,6 +39,7 @@ Le code est monté en volume : les modifications sont rechargées à chaud (hot 
 docker compose up -d                  # lancer en arrière-plan
 docker compose logs -f backend        # suivre les logs d'un service
 docker compose exec backend sh        # shell dans un conteneur
+docker compose exec backend npm run seed  # données de démo (2 équipes, 22 utilisateurs, 4 semaines de pointages)
 docker compose down                   # arrêter et supprimer les conteneurs
 
 # Après un changement de package.json / package-lock.json
