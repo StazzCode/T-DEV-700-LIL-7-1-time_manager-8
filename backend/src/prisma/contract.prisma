@@ -82,6 +82,9 @@ model AuthIdentity {
   provider  String   @default("microsoft")
   subject   String
   createdAt TimestamptzString @default(now())
+
+  @@unique([provider, subject])
+  @@unique([userId, provider])
 }
 
 model RefreshToken {
@@ -116,6 +119,8 @@ model WorkSchedule {
   endTime   String
   createdAt TimestamptzString @default(now())
   updatedAt temporal.updatedAtString()
+
+  @@unique([userId, weekday])
 }
 
 model TimeEntry {

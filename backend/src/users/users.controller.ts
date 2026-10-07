@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { UsersService } from './users.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
@@ -9,15 +9,11 @@ export class UsersController {
 
   @Get()
   findAll(
-    @Query('page') page?: string,
-    @Query('pageSize') pageSize?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('pageSize', new DefaultValuePipe(20), ParseIntPipe) pageSize: number,
     @Query('q') q?: string,
   ) {
-    return this.usersService.findAll(
-      page ? parseInt(page, 10) : 1,
-      pageSize ? parseInt(pageSize, 10) : 20,
-      q,
-    );
+    return this.usersService.findAll(page, pageSize, q);
   }
 
   @Post()

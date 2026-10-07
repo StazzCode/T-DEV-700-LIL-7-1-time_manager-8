@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'f84d35a93f68c047dc1ca8850a5688c2dca060a0fec306bcfc0bcc666ee52a87'>;
+  StorageHashBase<'beeb04ec1ec339ac8521662b6f1bc93f575fb03376611a9d38ea87ae8a6cd1db'>;
 export type ExecutionHash =
   ExecutionHashBase<'c9bcd95317d823dde07afbf9f3cf0c0c883a01b9425278381da31890936cf7d9'>;
 export type ProfileHash =
@@ -918,7 +918,10 @@ type ContractBase = Omit<
                 };
               };
               primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [];
+              uniques: readonly [
+                { readonly columns: readonly ['provider', 'subject'] },
+                { readonly columns: readonly ['userId', 'provider'] },
+              ];
               indexes: readonly [
                 {
                   readonly name: 'AuthIdentity_userId_idx_a489d58a';
@@ -1506,7 +1509,7 @@ type ContractBase = Omit<
                 };
               };
               primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [];
+              uniques: readonly [{ readonly columns: readonly ['userId', 'weekday'] }];
               indexes: readonly [
                 {
                   readonly name: 'WorkSchedule_userId_idx_a489d58a';

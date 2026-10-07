@@ -1532,7 +1532,20 @@
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "provider",
+                    "subject"
+                  ]
+                },
+                {
+                  "columns": [
+                    "userId",
+                    "provider"
+                  ]
+                }
+              ]
             },
             "CorrectionRequest": {
               "checks": [
@@ -2322,7 +2335,14 @@
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "userId",
+                    "weekday"
+                  ]
+                }
+              ]
             }
           },
           "valueSet": {
@@ -2363,7 +2383,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "f84d35a93f68c047dc1ca8850a5688c2dca060a0fec306bcfc0bcc666ee52a87"
+    "storageHash": "beeb04ec1ec339ac8521662b6f1bc93f575fb03376611a9d38ea87ae8a6cd1db"
   },
   "execution": {
     "executionHash": "c9bcd95317d823dde07afbf9f3cf0c0c883a01b9425278381da31890936cf7d9",
