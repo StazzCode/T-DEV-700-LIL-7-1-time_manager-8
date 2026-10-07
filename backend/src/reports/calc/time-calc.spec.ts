@@ -3,6 +3,7 @@ import {
   contractGapMinutes,
   dailyMinutes,
   isoWeek,
+  isoWeekCount,
   isoWeekday,
   isSuspicious,
   localDate,
@@ -89,6 +90,20 @@ describe('daily and weekly totals', () => {
     expect(dailyMinutes(entries, opts)).toEqual(new Map([['2026-03-29', 60]]));
   });
 
+  it('makes the weekly total equal to the sum of the rounded daily totals', () => {
+    const entries = [5, 6, 7, 8, 9].map((d) =>
+      entry(`2026-10-0${d}T07:00:00Z`, `2026-10-0${d}T07:00:30Z`),
+    );
+    expect(weeklyMinutes(entries, opts)).toEqual(new Map([['2026-W41', 5]]));
+  });
+
+  it('counts a long session once a manager has verified it (R-07)', () => {
+    const long = entry('2026-10-05T05:00:00Z', '2026-10-05T17:30:00Z');
+    expect(dailyMinutes([{ ...long, verified: true }], opts)).toEqual(
+      new Map([['2026-10-05', 750]]),
+    );
+  });
+
   it('groups weeks from Monday to Sunday', () => {
     const entries = [
       entry('2026-10-05T07:00:00Z', '2026-10-05T15:00:00Z'),
@@ -119,6 +134,11 @@ describe('isSuspicious (R-07)', () => {
     expect(
       isSuspicious(entry('2026-10-05T07:00:00Z', '2026-10-06T03:00:00Z'), now),
     ).toBe(true);
+  });
+
+  it('does not flag a long session verified by a manager', () => {
+    const long = entry('2026-10-05T05:00:00Z', '2026-10-05T17:30:00Z');
+    expect(isSuspicious({ ...long, verified: true }, now)).toBe(false);
   });
 
   it('accepts exactly 12 h', () => {
@@ -192,6 +212,13 @@ describe('complianceAlerts – KPI 3', () => {
     ]);
   });
 
+  it('reports a verified session over 12 h', () => {
+    const long = entry('2026-10-05T05:00:00Z', '2026-10-05T17:30:00Z');
+    expect(complianceAlerts([{ ...long, verified: true }], opts)).toEqual([
+      { rule: 'daily_max', period: '2026-10-05', minutes: 750 },
+    ]);
+  });
+
   it('reports a week over 48 h', () => {
     const entries = [5, 6, 7, 8, 9].map((d) =>
       entry(`2026-10-0${d}T05:00:00Z`, `2026-10-0${d}T14:45:00Z`),
@@ -228,6 +255,11 @@ describe('team averages (R-13)', () => {
     expect(workingDays('2026-10-05', '2026-10-11')).toBe(5);
     expect(workingDays('2026-10-10', '2026-10-11')).toBe(0);
     expect(workingDays('2026-09-28', '2026-10-09')).toBe(10);
+  });
+
+  it('counts the ISO weeks touched by a period', () => {
+    expect(isoWeekCount('2026-10-05', '2026-10-18')).toBe(2);
+    expect(isoWeekCount('2026-10-07', '2026-10-13')).toBe(2);
   });
 
   it('averages per member and per period', () => {

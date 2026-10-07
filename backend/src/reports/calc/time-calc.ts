@@ -1,6 +1,7 @@
 export interface TimeEntry {
   clockIn: Date;
   clockOut: Date | null;
+  verified?: boolean;
 }
 
 export interface ScheduleSlot {
@@ -79,37 +80,44 @@ export function isSuspicious(
   now: Date,
   maxSessionHours = DEFAULT_MAX_SESSION_HOURS,
 ): boolean {
+  if (entry.verified) return false;
   const end = entry.clockOut ?? now;
   return end.getTime() - entry.clockIn.getTime() > maxSessionHours * HOUR;
 }
 
 function countedEntries(entries: TimeEntry[], opts: CalcOptions) {
-  const max = (opts.maxSessionHours ?? DEFAULT_MAX_SESSION_HOURS) * HOUR;
   return entries.filter(
     (e): e is TimeEntry & { clockOut: Date } =>
-      e.clockOut !== null && e.clockOut.getTime() - e.clockIn.getTime() <= max,
+      e.clockOut !== null && !isSuspicious(e, e.clockOut, opts.maxSessionHours),
   );
 }
 
-function totalsBy(
+export function dailyMinutes(
   entries: TimeEntry[],
   opts: CalcOptions,
-  key: (localDay: string) => string,
 ): Map<string, number> {
   const ms = new Map<string, number>();
   for (const e of countedEntries(entries, opts)) {
-    const k = key(localDate(e.clockIn, opts.timeZone));
-    ms.set(k, (ms.get(k) ?? 0) + e.clockOut.getTime() - e.clockIn.getTime());
+    const day = localDate(e.clockIn, opts.timeZone);
+    ms.set(
+      day,
+      (ms.get(day) ?? 0) + e.clockOut.getTime() - e.clockIn.getTime(),
+    );
   }
-  return new Map([...ms].map(([k, v]) => [k, Math.round(v / MINUTE)]));
+  return new Map([...ms].map(([day, v]) => [day, Math.round(v / MINUTE)]));
 }
 
-export function dailyMinutes(entries: TimeEntry[], opts: CalcOptions) {
-  return totalsBy(entries, opts, (day) => day);
+function weeklyFromDaily(daily: Map<string, number>): Map<string, number> {
+  const weekly = new Map<string, number>();
+  for (const [day, minutes] of daily) {
+    const week = isoWeek(day);
+    weekly.set(week, (weekly.get(week) ?? 0) + minutes);
+  }
+  return weekly;
 }
 
 export function weeklyMinutes(entries: TimeEntry[], opts: CalcOptions) {
-  return totalsBy(entries, opts, isoWeek);
+  return weeklyFromDaily(dailyMinutes(entries, opts));
 }
 
 export function contractGapMinutes(workedMinutes: number, weeklyHours: number) {
@@ -148,27 +156,28 @@ export function complianceAlerts(
   opts: CalcOptions,
 ): ComplianceAlert[] {
   const alerts: ComplianceAlert[] = [];
-  for (const [period, minutes] of dailyMinutes(entries, opts)) {
+  const daily = dailyMinutes(entries, opts);
+  for (const [period, minutes] of daily) {
     if (minutes > MAX_DAILY_MINUTES)
       alerts.push({ rule: 'daily_max', period, minutes });
   }
-  for (const [period, minutes] of weeklyMinutes(entries, opts)) {
+  for (const [period, minutes] of weeklyFromDaily(daily)) {
     if (minutes > MAX_WEEKLY_MINUTES)
       alerts.push({ rule: 'weekly_max', period, minutes });
   }
 
-  const sorted = countedEntries(entries, opts).sort(
-    (a, b) => a.clockIn.getTime() - b.clockIn.getTime(),
-  );
+  const sorted = countedEntries(entries, opts)
+    .map((e) => ({ ...e, day: localDate(e.clockIn, opts.timeZone) }))
+    .sort((a, b) => a.clockIn.getTime() - b.clockIn.getTime());
   for (let i = 1; i < sorted.length; i++) {
     const prev = sorted[i - 1];
-    const day = localDate(sorted[i].clockIn, opts.timeZone);
-    if (day === localDate(prev.clockIn, opts.timeZone)) continue;
-    const rest = sorted[i].clockIn.getTime() - prev.clockOut.getTime();
+    const cur = sorted[i];
+    if (cur.day === prev.day) continue;
+    const rest = cur.clockIn.getTime() - prev.clockOut.getTime();
     if (rest < MIN_DAILY_REST_MS) {
       alerts.push({
         rule: 'daily_rest',
-        period: day,
+        period: cur.day,
         minutes: Math.round(rest / MINUTE),
       });
     }
@@ -176,14 +185,21 @@ export function complianceAlerts(
   return alerts;
 }
 
-export function workingDays(from: string, to: string): number {
-  let count = 0;
+function daysBetween(from: string, to: string): string[] {
+  const days: string[] = [];
   const end = Date.parse(`${to}T00:00:00Z`);
   for (let t = Date.parse(`${from}T00:00:00Z`); t <= end; t += DAY) {
-    const weekday = new Date(t).getUTCDay();
-    if (weekday !== 0 && weekday !== 6) count++;
+    days.push(new Date(t).toISOString().slice(0, 10));
   }
-  return count;
+  return days;
+}
+
+export function workingDays(from: string, to: string): number {
+  return daysBetween(from, to).filter((day) => isoWeekday(day) <= 5).length;
+}
+
+export function isoWeekCount(from: string, to: string): number {
+  return new Set(daysBetween(from, to).map(isoWeek)).size;
 }
 
 export function teamAverage(

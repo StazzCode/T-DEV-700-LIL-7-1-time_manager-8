@@ -28,8 +28,8 @@ Ces quatre règles se testent en e2e, avec la base.
 | --- | --- | --- |
 | R-04 | Une session est rattachée au jour local de Paris, pas au jour UTC. | `localDate` |
 | R-05 | Une session qui passe minuit compte pour le jour d'arrivée. | `dailyMinutes` |
-| R-06 | Les sessions ouvertes ne comptent pas dans les totaux. L'arrondi à la minute se fait une fois sur le total du jour, pas session par session. | `dailyMinutes`, `weeklyMinutes` |
-| R-07 | Une session de plus de 12 h, ouverte ou fermée, est un oubli probable. Elle est signalée et exclue des totaux jusqu'à sa correction. | `isSuspicious` |
+| R-06 | Les sessions ouvertes ne comptent pas dans les totaux. L'arrondi à la minute se fait une fois sur le total du jour, pas session par session. Le total de la semaine est la somme des totaux du jour. | `dailyMinutes`, `weeklyMinutes` |
+| R-07 | Une session de plus de 12 h, ouverte ou fermée, est un oubli probable. Elle est signalée et exclue des totaux jusqu'à sa correction, ou jusqu'à ce qu'un manager confirme qu'elle est réelle (`verified`). | `isSuspicious` |
 | R-08 | Plusieurs sessions par jour sont permises (pause déjeuner = départ puis arrivée). Elles s'additionnent et ne se chevauchent jamais. | `dailyMinutes`, contrainte `EXCLUDE` |
 | R-12 | Les durées sont calculées sur des instants UTC : elles restent exactes lors des changements d'heure. | `dailyMinutes` |
 
@@ -45,9 +45,15 @@ Ces quatre règles se testent en e2e, avec la base.
 
 - Moyenne quotidienne = total des heures de l'équipe ÷ (membres actifs × jours ouvrés de la période).
 - Moyenne hebdomadaire = total des heures ÷ (membres actifs × semaines ISO de la période).
-- Fonctions : `workingDays`, `teamAverage`.
+- Une semaine entamée par la période compte comme une semaine entière : passer des semaines complètes.
+- Fonctions : `workingDays`, `isoWeekCount`, `teamAverage`.
 
-Limite connue : les jours fériés sont comptés comme jours ouvrés. Ajouter une liste de jours fériés si les RH en ont besoin.
+## Limites connues
+
+- Les jours fériés sont comptés comme jours ouvrés.
+- Un employé à temps partiel compte pour 5 jours par semaine dans les moyennes d'équipe.
+- La ponctualité ne compte que les jours où l'employé a pointé : une absence ne fait pas baisser le taux.
+- Une pause après une session qui passe minuit est signalée comme un repos trop court. Sans travail de nuit chez Trinity Market, le cas reste exceptionnel.
 
 ## Paramètres
 
