@@ -1,6 +1,6 @@
 # 002 · Neon pour la base de données et l'authentification
 
-**Statut :** adoptée
+**Statut :** adoptée, connexion Microsoft à confirmer
 
 ## Contexte
 
@@ -9,7 +9,7 @@ L'application a besoin d'une base PostgreSQL fiable, de sauvegardes et d'une aut
 ## Décision
 
 - Base PostgreSQL hébergée sur Neon.
-- Authentification déléguée à Neon Auth. Le backend vérifie les tokens avec la clé publique (JWKS).
+- Authentification email / mot de passe déléguée à Neon Auth. Le backend vérifie les tokens avec la clé publique (JWKS).
 
 ## Raisons
 
@@ -21,6 +21,13 @@ L'application a besoin d'une base PostgreSQL fiable, de sauvegardes et d'une aut
 
 - Conteneur PostgreSQL en production : sauvegardes et mises à jour à notre charge.
 - Authentification maison (JWT + argon2) : plus de code sensible à écrire et à tester.
+
+## Point ouvert : connexion Microsoft
+
+Le sujet impose la connexion avec un compte Microsoft. Le guide OAuth de la version actuelle de Neon Auth (Better Auth) ne liste que Google, GitHub et Vercel. Microsoft n'apparaît que dans la documentation de l'ancienne version (Stack Auth).
+
+- Si le tableau de bord Neon propose Microsoft : le configurer avec le Tenant ID de l'entreprise.
+- Sinon : gérer la connexion Microsoft (OIDC avec Microsoft Entra ID) dans le backend, en liant le compte Microsoft à l'utilisateur existant par son email.
 
 ## Conséquences
 
