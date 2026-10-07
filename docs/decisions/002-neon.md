@@ -1,6 +1,6 @@
 # 002 · Neon pour la base de données et l'authentification
 
-**Statut :** adoptée, connexion Microsoft à confirmer
+**Statut :** adoptée pour la base et la connexion email / mot de passe. Connexion Microsoft à trancher par Youssef avant le sprint 3.
 
 ## Contexte
 
@@ -24,10 +24,14 @@ L'application a besoin d'une base PostgreSQL fiable, de sauvegardes et d'une aut
 
 ## Point ouvert : connexion Microsoft
 
-Le sujet impose la connexion avec un compte Microsoft. Le guide OAuth de la version actuelle de Neon Auth (Better Auth) ne liste que Google, GitHub et Vercel. Microsoft n'apparaît que dans la documentation de l'ancienne version (Stack Auth).
+Le sujet impose la connexion avec un compte Microsoft. Le guide OAuth de la version actuelle de Neon Auth ne liste que Google, GitHub et Vercel. Microsoft n'apparaît que dans la documentation de l'ancienne version (Stack Auth), alors que Better Auth, sur lequel repose Neon Auth, a un fournisseur Microsoft.
 
-- Si le tableau de bord Neon propose Microsoft : le configurer avec le Tenant ID de l'entreprise.
-- Sinon : gérer la connexion Microsoft (OIDC avec Microsoft Entra ID) dans le backend, en liant le compte Microsoft à l'utilisateur existant par son email.
+1. Vérifier dans le tableau de bord Neon si Microsoft est proposé. Si oui, le configurer avec le Tenant ID de l'entreprise : la décision reste valable.
+2. Sinon, cette décision est à revoir pour l'authentification. Gérer Microsoft dans le backend implique d'émettre nos propres tokens, ce que la décision voulait justement éviter. Comparer alors avec Better Auth hébergé dans le backend, qui gère email / mot de passe et Microsoft.
+
+Quelle que soit l'option, un compte Microsoft se lie à un utilisateur par les claims `oid` et `tid`, jamais par l'email seul : l'email d'un compte Entra ID peut être modifié par son titulaire. Seuls les comptes du tenant de l'entreprise sont acceptés. Sans utilisateur correspondant, la connexion est refusée : les comptes sont créés par les managers.
+
+Le schéma (`database.md`), l'architecture et les variables d'environnement seront mis à jour avec l'option retenue.
 
 ## Conséquences
 
