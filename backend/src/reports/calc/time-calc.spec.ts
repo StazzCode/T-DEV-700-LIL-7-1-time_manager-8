@@ -15,7 +15,6 @@ import {
 } from './time-calc.js';
 
 const TZ = 'Europe/Paris';
-const opts = { timeZone: TZ };
 
 const entry = (clockIn: string, clockOut: string | null): TimeEntry => ({
   clockIn: new Date(clockIn),
@@ -50,12 +49,12 @@ describe('daily and weekly totals', () => {
       entry('2026-10-05T07:00:00Z', '2026-10-05T10:30:00Z'),
       entry('2026-10-05T11:30:00Z', '2026-10-05T15:00:00Z'),
     ];
-    expect(dailyMinutes(entries, opts)).toEqual(new Map([['2026-10-05', 420]]));
+    expect(dailyMinutes(entries, TZ)).toEqual(new Map([['2026-10-05', 420]]));
   });
 
   it('attributes a session crossing midnight to the arrival day (R-05)', () => {
     const entries = [entry('2026-10-05T20:00:00Z', '2026-10-06T00:00:00Z')];
-    expect(dailyMinutes(entries, opts)).toEqual(new Map([['2026-10-05', 240]]));
+    expect(dailyMinutes(entries, TZ)).toEqual(new Map([['2026-10-05', 240]]));
   });
 
   it('ignores open sessions in totals (R-06)', () => {
@@ -63,12 +62,12 @@ describe('daily and weekly totals', () => {
       entry('2026-10-05T07:00:00Z', '2026-10-05T11:00:00Z'),
       entry('2026-10-05T12:00:00Z', null),
     ];
-    expect(dailyMinutes(entries, opts).get('2026-10-05')).toBe(240);
+    expect(dailyMinutes(entries, TZ).get('2026-10-05')).toBe(240);
   });
 
   it('excludes sessions longer than 12 h until they are corrected (R-07)', () => {
     const entries = [entry('2026-10-05T07:00:00Z', '2026-10-06T03:00:00Z')];
-    expect(dailyMinutes(entries, opts).size).toBe(0);
+    expect(dailyMinutes(entries, TZ).size).toBe(0);
   });
 
   it('rounds to the minute once per day, not once per session (R-06)', () => {
@@ -77,29 +76,31 @@ describe('daily and weekly totals', () => {
       entry('2026-10-05T08:00:00Z', '2026-10-05T08:01:20Z'),
       entry('2026-10-05T09:00:00Z', '2026-10-05T09:01:20Z'),
     ];
-    expect(dailyMinutes(entries, opts).get('2026-10-05')).toBe(4);
+    expect(dailyMinutes(entries, TZ).get('2026-10-05')).toBe(4);
   });
 
   it('counts real elapsed time when clocks go back (R-12)', () => {
     const entries = [entry('2026-10-24T22:30:00Z', '2026-10-25T03:30:00Z')];
-    expect(dailyMinutes(entries, opts)).toEqual(new Map([['2026-10-25', 300]]));
+    expect(dailyMinutes(entries, TZ)).toEqual(new Map([['2026-10-25', 300]]));
   });
 
   it('counts real elapsed time when clocks go forward (R-12)', () => {
     const entries = [entry('2026-03-29T00:30:00Z', '2026-03-29T01:30:00Z')];
-    expect(dailyMinutes(entries, opts)).toEqual(new Map([['2026-03-29', 60]]));
+    expect(dailyMinutes(entries, TZ)).toEqual(new Map([['2026-03-29', 60]]));
   });
 
   it('makes the weekly total equal to the sum of the rounded daily totals', () => {
     const entries = [5, 6, 7, 8, 9].map((d) =>
       entry(`2026-10-0${d}T07:00:00Z`, `2026-10-0${d}T07:00:30Z`),
     );
-    expect(weeklyMinutes(entries, opts)).toEqual(new Map([['2026-W41', 5]]));
+    expect(weeklyMinutes(dailyMinutes(entries, TZ))).toEqual(
+      new Map([['2026-W41', 5]]),
+    );
   });
 
   it('counts a long session once a manager has verified it (R-07)', () => {
     const long = entry('2026-10-05T05:00:00Z', '2026-10-05T17:30:00Z');
-    expect(dailyMinutes([{ ...long, verified: true }], opts)).toEqual(
+    expect(dailyMinutes([{ ...long, verified: true }], TZ)).toEqual(
       new Map([['2026-10-05', 750]]),
     );
   });
@@ -110,7 +111,7 @@ describe('daily and weekly totals', () => {
       entry('2026-10-11T07:00:00Z', '2026-10-11T09:00:00Z'),
       entry('2026-10-12T07:00:00Z', '2026-10-12T08:00:00Z'),
     ];
-    expect(weeklyMinutes(entries, opts)).toEqual(
+    expect(weeklyMinutes(dailyMinutes(entries, TZ))).toEqual(
       new Map([
         ['2026-W41', 600],
         ['2026-W42', 60],
@@ -162,7 +163,7 @@ describe('punctuality – KPI 1 (R-09)', () => {
       entry('2026-10-05T07:05:00Z', '2026-10-05T15:00:00Z'),
       entry('2026-10-06T07:05:01Z', '2026-10-06T15:00:00Z'),
     ];
-    expect(punctuality(entries, opts)).toEqual({ onTime: 1, worked: 2 });
+    expect(punctuality(entries, TZ)).toEqual({ onTime: 1, worked: 2 });
   });
 
   it('only looks at the first arrival of the day', () => {
@@ -170,32 +171,24 @@ describe('punctuality – KPI 1 (R-09)', () => {
       entry('2026-10-05T06:55:00Z', '2026-10-05T10:00:00Z'),
       entry('2026-10-05T12:30:00Z', '2026-10-05T15:00:00Z'),
     ];
-    expect(punctuality(entries, opts)).toEqual({ onTime: 1, worked: 1 });
+    expect(punctuality(entries, TZ)).toEqual({ onTime: 1, worked: 1 });
   });
 
   it('counts an arrival even if the session is still open', () => {
     const entries = [entry('2026-10-05T07:30:00Z', null)];
-    expect(punctuality(entries, opts)).toEqual({ onTime: 0, worked: 1 });
+    expect(punctuality(entries, TZ)).toEqual({ onTime: 0, worked: 1 });
   });
 
   it('skips unscheduled days such as weekends with the default schedule', () => {
     const entries = [entry('2026-10-10T09:00:00Z', '2026-10-10T12:00:00Z')];
-    expect(punctuality(entries, opts)).toEqual({ onTime: 0, worked: 0 });
+    expect(punctuality(entries, TZ)).toEqual({ onTime: 0, worked: 0 });
   });
 
   it('uses the personal schedule when there is one', () => {
     const schedule = [{ weekday: 1, startTime: '10:00' }];
     const entries = [entry('2026-10-05T07:55:00Z', '2026-10-05T15:00:00Z')];
-    expect(punctuality(entries, { ...opts, schedule })).toEqual({
+    expect(punctuality(entries, TZ, schedule)).toEqual({
       onTime: 1,
-      worked: 1,
-    });
-  });
-
-  it('honours a custom tolerance', () => {
-    const entries = [entry('2026-10-05T07:03:00Z', '2026-10-05T15:00:00Z')];
-    expect(punctuality(entries, { ...opts, toleranceMinutes: 0 })).toEqual({
-      onTime: 0,
       worked: 1,
     });
   });
@@ -207,14 +200,14 @@ describe('complianceAlerts – KPI 3', () => {
       entry('2026-10-05T06:00:00Z', '2026-10-05T16:00:00Z'),
       entry('2026-10-07T06:00:00Z', '2026-10-07T16:01:00Z'),
     ];
-    expect(complianceAlerts(entries, opts)).toEqual([
+    expect(complianceAlerts(entries, TZ)).toEqual([
       { rule: 'daily_max', period: '2026-10-07', minutes: 601 },
     ]);
   });
 
   it('reports a verified session over 12 h', () => {
     const long = entry('2026-10-05T05:00:00Z', '2026-10-05T17:30:00Z');
-    expect(complianceAlerts([{ ...long, verified: true }], opts)).toEqual([
+    expect(complianceAlerts([{ ...long, verified: true }], TZ)).toEqual([
       { rule: 'daily_max', period: '2026-10-05', minutes: 750 },
     ]);
   });
@@ -223,7 +216,7 @@ describe('complianceAlerts – KPI 3', () => {
     const entries = [5, 6, 7, 8, 9].map((d) =>
       entry(`2026-10-0${d}T05:00:00Z`, `2026-10-0${d}T14:45:00Z`),
     );
-    expect(complianceAlerts(entries, opts)).toContainEqual({
+    expect(complianceAlerts(entries, TZ)).toContainEqual({
       rule: 'weekly_max',
       period: '2026-W41',
       minutes: 2925,
@@ -237,7 +230,7 @@ describe('complianceAlerts – KPI 3', () => {
       entry('2026-10-06T11:00:00Z', '2026-10-06T15:00:00Z'),
       entry('2026-10-07T02:00:00Z', '2026-10-07T06:00:00Z'),
     ];
-    expect(complianceAlerts(entries, opts)).toEqual([
+    expect(complianceAlerts(entries, TZ)).toEqual([
       { rule: 'daily_rest', period: '2026-10-06', minutes: 600 },
     ]);
   });
@@ -246,7 +239,7 @@ describe('complianceAlerts – KPI 3', () => {
     const entries = [5, 6, 7, 8, 9].map((d) =>
       entry(`2026-10-0${d}T07:00:00Z`, `2026-10-0${d}T15:00:00Z`),
     );
-    expect(complianceAlerts(entries, opts)).toEqual([]);
+    expect(complianceAlerts(entries, TZ)).toEqual([]);
   });
 });
 

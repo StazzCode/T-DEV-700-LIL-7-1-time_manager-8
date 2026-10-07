@@ -9,11 +9,6 @@ export interface ScheduleSlot {
   startTime: string;
 }
 
-export interface CalcOptions {
-  timeZone: string;
-  maxSessionHours?: number;
-}
-
 export interface ComplianceAlert {
   rule: 'daily_max' | 'weekly_max' | 'daily_rest';
   period: string;
@@ -23,8 +18,9 @@ export interface ComplianceAlert {
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
-const DEFAULT_MAX_SESSION_HOURS = 12;
 
+const MAX_SESSION_MS = 12 * HOUR;
+const LATE_TOLERANCE_MINUTES = 5;
 const MAX_DAILY_MINUTES = 10 * 60;
 const MAX_WEEKLY_MINUTES = 48 * 60;
 const MIN_DAILY_REST_MS = 11 * HOUR;
@@ -75,30 +71,26 @@ export function isoWeek(date: string): string {
   return `${year}-W${String(week).padStart(2, '0')}`;
 }
 
-export function isSuspicious(
-  entry: TimeEntry,
-  now: Date,
-  maxSessionHours = DEFAULT_MAX_SESSION_HOURS,
-): boolean {
+export function isSuspicious(entry: TimeEntry, now: Date): boolean {
   if (entry.verified) return false;
   const end = entry.clockOut ?? now;
-  return end.getTime() - entry.clockIn.getTime() > maxSessionHours * HOUR;
+  return end.getTime() - entry.clockIn.getTime() > MAX_SESSION_MS;
 }
 
-function countedEntries(entries: TimeEntry[], opts: CalcOptions) {
+function countedEntries(entries: TimeEntry[]) {
   return entries.filter(
     (e): e is TimeEntry & { clockOut: Date } =>
-      e.clockOut !== null && !isSuspicious(e, e.clockOut, opts.maxSessionHours),
+      e.clockOut !== null && !isSuspicious(e, e.clockOut),
   );
 }
 
 export function dailyMinutes(
   entries: TimeEntry[],
-  opts: CalcOptions,
+  timeZone: string,
 ): Map<string, number> {
   const ms = new Map<string, number>();
-  for (const e of countedEntries(entries, opts)) {
-    const day = localDate(e.clockIn, opts.timeZone);
+  for (const e of countedEntries(entries)) {
+    const day = localDate(e.clockIn, timeZone);
     ms.set(
       day,
       (ms.get(day) ?? 0) + e.clockOut.getTime() - e.clockIn.getTime(),
@@ -107,7 +99,7 @@ export function dailyMinutes(
   return new Map([...ms].map(([day, v]) => [day, Math.round(v / MINUTE)]));
 }
 
-function weeklyFromDaily(daily: Map<string, number>): Map<string, number> {
+export function weeklyMinutes(daily: Map<string, number>): Map<string, number> {
   const weekly = new Map<string, number>();
   for (const [day, minutes] of daily) {
     const week = isoWeek(day);
@@ -116,24 +108,20 @@ function weeklyFromDaily(daily: Map<string, number>): Map<string, number> {
   return weekly;
 }
 
-export function weeklyMinutes(entries: TimeEntry[], opts: CalcOptions) {
-  return weeklyFromDaily(dailyMinutes(entries, opts));
-}
-
 export function contractGapMinutes(workedMinutes: number, weeklyHours: number) {
   return workedMinutes - Math.round(weeklyHours * 60);
 }
 
 export function punctuality(
   entries: TimeEntry[],
-  opts: CalcOptions & { schedule?: ScheduleSlot[]; toleranceMinutes?: number },
+  timeZone: string,
+  schedule: ScheduleSlot[] = DEFAULT_SCHEDULE,
 ): { onTime: number; worked: number } {
-  const schedule = opts.schedule?.length ? opts.schedule : DEFAULT_SCHEDULE;
-  const tolerance = opts.toleranceMinutes ?? 5;
+  if (!schedule.length) schedule = DEFAULT_SCHEDULE;
 
   const firstArrival = new Map<string, number>();
   for (const e of entries) {
-    const { date, secondsOfDay } = localParts(e.clockIn, opts.timeZone);
+    const { date, secondsOfDay } = localParts(e.clockIn, timeZone);
     const prev = firstArrival.get(date);
     if (prev === undefined || secondsOfDay < prev)
       firstArrival.set(date, secondsOfDay);
@@ -146,28 +134,28 @@ export function punctuality(
     if (!slot) continue;
     worked++;
     const [h, m] = slot.startTime.split(':').map(Number);
-    if (arrival <= (h * 60 + m + tolerance) * 60) onTime++;
+    if (arrival <= (h * 60 + m + LATE_TOLERANCE_MINUTES) * 60) onTime++;
   }
   return { onTime, worked };
 }
 
 export function complianceAlerts(
   entries: TimeEntry[],
-  opts: CalcOptions,
+  timeZone: string,
 ): ComplianceAlert[] {
   const alerts: ComplianceAlert[] = [];
-  const daily = dailyMinutes(entries, opts);
+  const daily = dailyMinutes(entries, timeZone);
   for (const [period, minutes] of daily) {
     if (minutes > MAX_DAILY_MINUTES)
       alerts.push({ rule: 'daily_max', period, minutes });
   }
-  for (const [period, minutes] of weeklyFromDaily(daily)) {
+  for (const [period, minutes] of weeklyMinutes(daily)) {
     if (minutes > MAX_WEEKLY_MINUTES)
       alerts.push({ rule: 'weekly_max', period, minutes });
   }
 
-  const sorted = countedEntries(entries, opts)
-    .map((e) => ({ ...e, day: localDate(e.clockIn, opts.timeZone) }))
+  const sorted = countedEntries(entries)
+    .map((e) => ({ ...e, day: localDate(e.clockIn, timeZone) }))
     .sort((a, b) => a.clockIn.getTime() - b.clockIn.getTime());
   for (let i = 1; i < sorted.length; i++) {
     const prev = sorted[i - 1];
