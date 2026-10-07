@@ -1,21 +1,166 @@
 // use prisma-8
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  username  String?
-  name      String?
-  posts     Post[]
-  createdAt TimestamptzString @default(now())
-  updatedAt temporal.updatedAtString()
+// Prisma 8 Data Contract for Time Manager
+
+enum UserRole {
+  employee
+  manager
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String?
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
+enum EntrySource {
+  web
+  mobile
+  device
+  correction
+}
+
+enum TokenPurpose {
+  invitation
+  password_reset
+}
+
+enum CorrectionStatus {
+  pending
+  approved
+  rejected
+}
+
+model User {
+  id            String      @id @default(uuid())
+  email         String      @unique
+  passwordHash  String?
+  firstName     String
+  lastName      String
+  phone         String?
+  role          UserRole    @default(employee)
+  weeklyHours   Float       @default(35.0)
+  activatedAt   TimestamptzString?
+  deletedAt     TimestamptzString?
+  createdAt     TimestamptzString @default(now())
+  updatedAt     temporal.updatedAtString()
+
+  // Relations
+  managedTeams        Team[]              @relation("TeamManager")
+  teamMemberships     TeamMember[]
+  timeEntries         TimeEntry[]
+  workSchedules       WorkSchedule[]
+  authIdentities      AuthIdentity[]
+  refreshTokens       RefreshToken[]
+  userTokens          UserToken[]
+  requestedCorrections CorrectionRequest[] @relation("CorrectionRequester")
+  reviewedCorrections  CorrectionRequest[] @relation("CorrectionReviewer")
+  auditLogs           AuditLog[]
+}
+
+model Team {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  description String?
+  managerId   String
+  manager     User         @relation("TeamManager", fields: [managerId], references: [id])
+  createdAt   TimestamptzString @default(now())
+  updatedAt   temporal.updatedAtString()
+
+  members     TeamMember[]
+}
+
+model TeamMember {
+  teamId   String
+  userId   String
+  joinedAt TimestamptzString @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, userId])
+}
+
+model AuthIdentity {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider  String   @default("microsoft")
+  subject   String
+  createdAt TimestamptzString @default(now())
+
+  @@unique([provider, subject])
+  @@unique([userId, provider])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  familyId  String
+  expiresAt TimestamptzString
+  revokedAt TimestamptzString?
+  userAgent String?
+  createdAt TimestamptzString @default(now())
+}
+
+model UserToken {
+  id        String       @id @default(uuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose   TokenPurpose
+  tokenHash String       @unique
+  expiresAt TimestamptzString
+  usedAt    TimestamptzString?
+  createdAt TimestamptzString @default(now())
+}
+
+model WorkSchedule {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekday   Int
+  startTime String
+  endTime   String
   createdAt TimestamptzString @default(now())
   updatedAt temporal.updatedAtString()
+
+  @@unique([userId, weekday])
+}
+
+model TimeEntry {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  clockIn   TimestamptzString @default(now())
+  clockOut  TimestamptzString?
+  source    EntrySource @default(web)
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+
+  correctionRequests CorrectionRequest[]
+}
+
+model CorrectionRequest {
+  id                 String           @id @default(uuid())
+  timeEntryId        String?
+  timeEntry          TimeEntry?       @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+  requesterId        String
+  requester          User             @relation("CorrectionRequester", fields: [requesterId], references: [id])
+  requestedClockIn   TimestamptzString
+  requestedClockOut  TimestamptzString
+  reason             String
+  status             CorrectionStatus @default(pending)
+  reviewerId         String?
+  reviewer           User?            @relation("CorrectionReviewer", fields: [reviewerId], references: [id])
+  reviewComment      String?
+  reviewedAt         TimestamptzString?
+  createdAt          TimestamptzString @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  changes   String?
+  ip        String?
+  createdAt TimestamptzString @default(now())
 }
