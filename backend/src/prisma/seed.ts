@@ -30,14 +30,6 @@ const SCHEDULES: Partial<
   partTime: { weekdays: [1, 2, 3], start: '09:00', end: '15:00' },
 };
 
-const ARRIVAL_OFFSETS: Record<Profile, [number, number]> = {
-  punctual: [-15, 4],
-  late: [-5, 25],
-  early: [-10, 4],
-  partTime: [-15, 4],
-  overtime: [-15, 4],
-};
-
 const TEAMS = [
   {
     name: 'Opérations',
@@ -81,34 +73,17 @@ const hasApprovedCorrection = TEAMS[1].members[0];
 const between = (min: number, max: number) =>
   Math.round(min + Math.random() * (max - min));
 
-const parts = new Intl.DateTimeFormat('en-CA', {
+const paris = new Intl.DateTimeFormat('sv-SE', {
   timeZone: TZ,
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23',
+  dateStyle: 'short',
+  timeStyle: 'short',
 });
-
-function local(instant: number) {
-  const p: Record<string, string> = {};
-  for (const { type, value } of parts.formatToParts(instant)) p[type] = value;
-  return {
-    day: `${p.year}-${p.month}-${p.day}`,
-    hour: +p.hour,
-    minute: +p.minute,
-  };
-}
+const parisDay = (instant: number) => paris.format(instant).slice(0, 10);
 
 function parisToIso(day: string, minutesOfDay: number): string {
-  const [y, m, d] = day.split('-').map(Number);
-  const wall = Date.UTC(y, m - 1, d, 0, minutesOfDay);
-  const offset = (t: number) => {
-    const l = local(t);
-    const [ly, lm, ld] = l.day.split('-').map(Number);
-    return Date.UTC(ly, lm - 1, ld, l.hour, l.minute) - t;
-  };
+  const wall = Date.parse(`${day}T00:00:00Z`) + minutesOfDay * 60_000;
+  const offset = (t: number) =>
+    Date.parse(`${paris.format(t).replace(' ', 'T')}:00Z`) - t;
   return new Date(wall - offset(wall - offset(wall))).toISOString();
 }
 
@@ -162,7 +137,7 @@ function workday(
     (WEEKLY_HOURS[profile] * 60) / (schedule?.weekdays.length ?? 5);
   const arrival =
     toMinutes(schedule?.start ?? '09:00') +
-    between(...ARRIVAL_OFFSETS[profile]);
+    (profile === 'late' ? between(-5, 25) : between(-15, 4));
   const extra =
     profile === 'overtime' && Math.random() < 0.5
       ? between(60, 150)
@@ -202,7 +177,7 @@ const db = postgres<Contract>({
 
 async function main() {
   const now = Date.now();
-  const today = local(now).day;
+  const today = parisDay(now);
   const days = demoDays(today);
   const lastWorkday = days.filter((d) => d < today).at(-1)!;
   const correctionDay = days[2];
@@ -231,8 +206,9 @@ async function main() {
     await orm.User.where((u) => u.email.in(emails)).deleteAndCount();
 
     const entries: Entry[] = [];
-    const corrections: Parameters<typeof orm.CorrectionRequest.create>[0][] =
-      [];
+    const corrections: Parameters<
+      typeof orm.CorrectionRequest.createAndCount
+    >[0][number][] = [];
     let schedules = 0;
 
     for (const team of TEAMS) {
@@ -318,9 +294,7 @@ async function main() {
     }
 
     const timeEntries = await orm.TimeEntry.createAndCount(entries);
-    for (const correction of corrections) {
-      await orm.CorrectionRequest.create(correction);
-    }
+    await orm.CorrectionRequest.createAndCount(corrections);
 
     return (
       `Seed OK: ${emails.length} users (${TEAMS.length} managers), ` +
