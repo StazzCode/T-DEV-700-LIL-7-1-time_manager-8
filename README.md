@@ -1,12 +1,12 @@
 # Time Manager
 
 Monorepo : `backend/` (NestJS + Prisma, port 3000) et `frontend/` (Vite, port 5173).
-Base de données et authentification : [Neon](https://console.neon.tech/app/projects/small-moon-01415420/branches/br-orange-brook-b1mtti52) (hébergées, aucun conteneur de DB local).
+Base de données : [Neon](https://console.neon.tech/app/projects/small-moon-01415420/branches/br-orange-brook-b1mtti52) (hébergées, aucun conteneur de DB local).
 
 ## Prérequis
 
 - Docker + Docker Compose v2
-- Un projet Neon (URLs de connexion + Neon Auth)
+- Un projet Neon (URLs de connexion)
 
 ## Lancer le projet
 
@@ -28,8 +28,6 @@ Le code est monté en volume : les modifications sont rechargées à chaud (hot 
 | --------------------- | ----------------------------------------- |
 | `DATABASE_URL`        | URL Neon poolée (utilisée par l'app)      |
 | `DATABASE_URL_DIRECT` | URL Neon directe (migrations)             |
-| `NEON_AUTH_URL`       | URL Neon Auth (aussi passée au frontend)  |
-| `NEON_AUTH_JWKS_URL`  | JWKS Neon Auth (vérification des tokens)  |
 
 `.env` n'est jamais commité : ne modifier que `.env.example` pour documenter une nouvelle variable.
 
