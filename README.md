@@ -11,7 +11,7 @@ Base de données : [Neon](https://console.neon.tech/app/projects/small-moon-0141
 ## Lancer le projet
 
 ```bash
-cp .env.example .env     # puis remplir les valeurs
+cp backend/.env.example backend/.env   # puis remplir les valeurs (voir ci-dessous)
 docker compose up --build
 ```
 
@@ -22,14 +22,22 @@ docker compose up --build
 
 Le code est monté en volume : les modifications sont rechargées à chaud (hot reload), sans rebuild.
 
-## Variables d'environnement (`.env`)
+## Variables d'environnement (`backend/.env`)
 
-| Variable              | Rôle                                      |
-| --------------------- | ----------------------------------------- |
-| `DATABASE_URL`        | URL Neon poolée (utilisée par l'app)      |
-| `DATABASE_URL_DIRECT` | URL Neon directe (migrations)             |
+| Variable              | Rôle                                                     |
+| --------------------- | -------------------------------------------------------- |
+| `DATABASE_URL`        | URL Neon poolée (utilisée par l'app), via `neon env pull` |
+| `BETTER_AUTH_SECRET`  | Signe les cookies de session (voir Secrets)              |
+| `BETTER_AUTH_URL`     | Origine utilisée par le navigateur : `http://localhost:5173` en dev |
 
 `.env` n'est jamais commité : ne modifier que `.env.example` pour documenter une nouvelle variable.
+
+### Secrets
+
+- **En développement**, chacun génère son propre secret : `openssl rand -base64 32`, à coller dans `BETTER_AUTH_SECRET`. Ne pas le partager, même si plusieurs personnes utilisent la même branche Neon : les sessions sont en base et chaque cookie n'est vérifié que par le backend de son propriétaire.
+- **En staging / production**, un secret unique par environnement, stocké dans les secrets de l'hébergeur (ou le futur `.env.prod`). Jamais dans Git, jamais par chat ou email, jamais réutilisé depuis le dev.
+- **Changer un secret** déconnecte tous les utilisateurs de cet environnement. C'est sans risque, et c'est la marche à suivre si un secret fuite.
+- Si une option Better Auth qui chiffre des données en base avec le secret est activée un jour, toutes les personnes qui partagent une même branche Neon devront utiliser le même secret.
 
 ## Commandes utiles
 
