@@ -3,6 +3,10 @@ import { randomUUID } from 'node:crypto';
 import { betterAuth } from 'better-auth';
 import { Pool } from 'pg';
 
+if (!process.env['BETTER_AUTH_SECRET']) {
+  throw new Error('BETTER_AUTH_SECRET manquant dans backend/.env (openssl rand -base64 32)');
+}
+
 export const auth = betterAuth({
   basePath: '/api/v1/auth',
   database: new Pool({ connectionString: process.env['DATABASE_URL'] }),
@@ -21,5 +25,4 @@ export const auth = betterAuth({
   account: { modelName: 'Account' },
   verification: { modelName: 'Verification' },
   advanced: { database: { generateId: () => randomUUID() } },
-  hooks: {},
 });

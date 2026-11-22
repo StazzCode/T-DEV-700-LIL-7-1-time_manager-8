@@ -4,6 +4,7 @@ import { hashPassword } from 'better-auth/crypto';
 import postgres from '@prisma/orm-postgres/runtime';
 import type { Contract } from './contract.d';
 import contractJson from './contract.json' with { type: 'json' };
+import { fullName } from '../users/identity.ts';
 
 config({ path: ['.env', '../.env'], quiet: true });
 
@@ -103,7 +104,7 @@ const email = (p: { firstName: string; lastName: string }) =>
 const identity = (p: { firstName: string; lastName: string }) => ({
   email: email(p),
   emailVerified: true,
-  name: `${p.firstName} ${p.lastName}`,
+  name: fullName(p.firstName, p.lastName),
   firstName: p.firstName,
   lastName: p.lastName,
 });
