@@ -4,20 +4,20 @@
   "target": "postgres",
   "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
   "roots": {
-    "AuditLog": {
-      "model": "AuditLog",
+    "Account": {
+      "model": "Account",
       "namespace": "public"
     },
-    "AuthIdentity": {
-      "model": "AuthIdentity",
+    "AuditLog": {
+      "model": "AuditLog",
       "namespace": "public"
     },
     "CorrectionRequest": {
       "model": "CorrectionRequest",
       "namespace": "public"
     },
-    "RefreshToken": {
-      "model": "RefreshToken",
+    "Session": {
+      "model": "Session",
       "namespace": "public"
     },
     "Team": {
@@ -36,8 +36,8 @@
       "model": "User",
       "namespace": "public"
     },
-    "UserToken": {
-      "model": "UserToken",
+    "Verification": {
+      "model": "Verification",
       "namespace": "public"
     },
     "WorkSchedule": {
@@ -87,19 +87,6 @@
               }
             ]
           },
-          "TokenPurpose": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "invitation",
-                "value": "invitation"
-              },
-              {
-                "name": "password_reset",
-                "value": "password_reset"
-              }
-            ]
-          },
           "UserRole": {
             "codecId": "pg/text@1",
             "members": [
@@ -115,6 +102,164 @@
           }
         },
         "models": {
+          "Account": {
+            "fields": {
+              "accessToken": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "accessTokenExpiresAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "accountId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "idToken": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "password": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "providerId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "refreshToken": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "refreshTokenExpiresAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "scope": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "accessToken": {
+                  "column": "accessToken"
+                },
+                "accessTokenExpiresAt": {
+                  "column": "accessTokenExpiresAt"
+                },
+                "accountId": {
+                  "column": "accountId"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "idToken": {
+                  "column": "idToken"
+                },
+                "password": {
+                  "column": "password"
+                },
+                "providerId": {
+                  "column": "providerId"
+                },
+                "refreshToken": {
+                  "column": "refreshToken"
+                },
+                "refreshTokenExpiresAt": {
+                  "column": "refreshTokenExpiresAt"
+                },
+                "scope": {
+                  "column": "scope"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "Account"
+            }
+          },
           "AuditLog": {
             "fields": {
               "action": {
@@ -221,84 +366,6 @@
               },
               "namespaceId": "public",
               "table": "AuditLog"
-            }
-          },
-          "AuthIdentity": {
-            "fields": {
-              "createdAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-string@1",
-                  "kind": "scalar"
-                }
-              },
-              "id": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "provider": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "subject": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "userId": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              }
-            },
-            "relations": {
-              "user": {
-                "cardinality": "N:1",
-                "nullable": false,
-                "on": {
-                  "localFields": [
-                    "userId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "User",
-                  "namespace": "public"
-                }
-              }
-            },
-            "storage": {
-              "fields": {
-                "createdAt": {
-                  "column": "createdAt"
-                },
-                "id": {
-                  "column": "id"
-                },
-                "provider": {
-                  "column": "provider"
-                },
-                "subject": {
-                  "column": "subject"
-                },
-                "userId": {
-                  "column": "userId"
-                }
-              },
-              "namespaceId": "public",
-              "table": "AuthIdentity"
             }
           },
           "CorrectionRequest": {
@@ -477,7 +544,7 @@
               "table": "CorrectionRequest"
             }
           },
-          "RefreshToken": {
+          "Session": {
             "fields": {
               "createdAt": {
                 "nullable": false,
@@ -493,13 +560,6 @@
                   "kind": "scalar"
                 }
               },
-              "familyId": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
               "id": {
                 "nullable": false,
                 "type": {
@@ -507,17 +567,24 @@
                   "kind": "scalar"
                 }
               },
-              "revokedAt": {
+              "ipAddress": {
                 "nullable": true,
                 "type": {
-                  "codecId": "pg/timestamptz-string@1",
+                  "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
-              "tokenHash": {
+              "token": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
                   "kind": "scalar"
                 }
               },
@@ -562,17 +629,17 @@
                 "expiresAt": {
                   "column": "expiresAt"
                 },
-                "familyId": {
-                  "column": "familyId"
-                },
                 "id": {
                   "column": "id"
                 },
-                "revokedAt": {
-                  "column": "revokedAt"
+                "ipAddress": {
+                  "column": "ipAddress"
                 },
-                "tokenHash": {
-                  "column": "tokenHash"
+                "token": {
+                  "column": "token"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
                 },
                 "userAgent": {
                   "column": "userAgent"
@@ -582,7 +649,7 @@
                 }
               },
               "namespaceId": "public",
-              "table": "RefreshToken"
+              "table": "Session"
             }
           },
           "Team": {
@@ -911,6 +978,13 @@
                   "kind": "scalar"
                 }
               },
+              "emailVerified": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
               "firstName": {
                 "nullable": false,
                 "type": {
@@ -925,6 +999,13 @@
                   "kind": "scalar"
                 }
               },
+              "image": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "lastName": {
                 "nullable": false,
                 "type": {
@@ -932,8 +1013,8 @@
                   "kind": "scalar"
                 }
               },
-              "passwordHash": {
-                "nullable": true,
+              "name": {
+                "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -975,6 +1056,21 @@
               }
             },
             "relations": {
+              "accounts": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Account",
+                  "namespace": "public"
+                }
+              },
               "auditLogs": {
                 "cardinality": "1:N",
                 "on": {
@@ -990,21 +1086,6 @@
                   "namespace": "public"
                 }
               },
-              "authIdentities": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "userId"
-                  ]
-                },
-                "to": {
-                  "model": "AuthIdentity",
-                  "namespace": "public"
-                }
-              },
               "managedTeams": {
                 "cardinality": "1:N",
                 "on": {
@@ -1017,21 +1098,6 @@
                 },
                 "to": {
                   "model": "Team",
-                  "namespace": "public"
-                }
-              },
-              "refreshTokens": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "userId"
-                  ]
-                },
-                "to": {
-                  "model": "RefreshToken",
                   "namespace": "public"
                 }
               },
@@ -1065,6 +1131,21 @@
                   "namespace": "public"
                 }
               },
+              "sessions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Session",
+                  "namespace": "public"
+                }
+              },
               "teamMemberships": {
                 "cardinality": "1:N",
                 "on": {
@@ -1092,21 +1173,6 @@
                 },
                 "to": {
                   "model": "TimeEntry",
-                  "namespace": "public"
-                }
-              },
-              "userTokens": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "userId"
-                  ]
-                },
-                "to": {
-                  "model": "UserToken",
                   "namespace": "public"
                 }
               },
@@ -1140,17 +1206,23 @@
                 "email": {
                   "column": "email"
                 },
+                "emailVerified": {
+                  "column": "emailVerified"
+                },
                 "firstName": {
                   "column": "firstName"
                 },
                 "id": {
                   "column": "id"
                 },
+                "image": {
+                  "column": "image"
+                },
                 "lastName": {
                   "column": "lastName"
                 },
-                "passwordHash": {
-                  "column": "passwordHash"
+                "name": {
+                  "column": "name"
                 },
                 "phone": {
                   "column": "phone"
@@ -1169,7 +1241,7 @@
               "table": "User"
             }
           },
-          "UserToken": {
+          "Verification": {
             "fields": {
               "createdAt": {
                 "nullable": false,
@@ -1192,34 +1264,21 @@
                   "kind": "scalar"
                 }
               },
-              "purpose": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                },
-                "valueSet": {
-                  "entityKind": "enum",
-                  "entityName": "TokenPurpose",
-                  "namespaceId": "public",
-                  "plane": "domain"
-                }
-              },
-              "tokenHash": {
+              "identifier": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
-              "usedAt": {
-                "nullable": true,
+              "updatedAt": {
+                "nullable": false,
                 "type": {
                   "codecId": "pg/timestamptz-string@1",
                   "kind": "scalar"
                 }
               },
-              "userId": {
+              "value": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
@@ -1227,24 +1286,7 @@
                 }
               }
             },
-            "relations": {
-              "user": {
-                "cardinality": "N:1",
-                "nullable": false,
-                "on": {
-                  "localFields": [
-                    "userId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "User",
-                  "namespace": "public"
-                }
-              }
-            },
+            "relations": {},
             "storage": {
               "fields": {
                 "createdAt": {
@@ -1256,21 +1298,18 @@
                 "id": {
                   "column": "id"
                 },
-                "purpose": {
-                  "column": "purpose"
+                "identifier": {
+                  "column": "identifier"
                 },
-                "tokenHash": {
-                  "column": "tokenHash"
+                "updatedAt": {
+                  "column": "updatedAt"
                 },
-                "usedAt": {
-                  "column": "usedAt"
-                },
-                "userId": {
-                  "column": "userId"
+                "value": {
+                  "column": "value"
                 }
               },
               "namespaceId": "public",
-              "table": "UserToken"
+              "table": "Verification"
             }
           },
           "WorkSchedule": {
@@ -1380,6 +1419,121 @@
       "public": {
         "entries": {
           "table": {
+            "Account": {
+              "columns": {
+                "accessToken": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "accessTokenExpiresAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "accountId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "idToken": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "password": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "providerId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "refreshToken": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "refreshTokenExpiresAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "scope": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Account"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "Account_userId_idx_a489d58a",
+                  "prefix": "Account_userId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "providerId",
+                    "accountId"
+                  ]
+                }
+              ]
+            },
             "AuditLog": {
               "columns": {
                 "action": {
@@ -1461,91 +1615,6 @@
                 ]
               },
               "uniques": []
-            },
-            "AuthIdentity": {
-              "columns": {
-                "createdAt": {
-                  "codecId": "pg/timestamptz-string@1",
-                  "default": {
-                    "expression": "now()",
-                    "kind": "function"
-                  },
-                  "nativeType": "timestamptz",
-                  "nullable": false
-                },
-                "id": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "provider": {
-                  "codecId": "pg/text@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": "microsoft"
-                  },
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "subject": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "userId": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                }
-              },
-              "foreignKeys": [
-                {
-                  "onDelete": "cascade",
-                  "source": {
-                    "columns": [
-                      "userId"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "AuthIdentity"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "User"
-                  }
-                }
-              ],
-              "indexes": [
-                {
-                  "columns": [
-                    "userId"
-                  ],
-                  "name": "AuthIdentity_userId_idx_a489d58a",
-                  "prefix": "AuthIdentity_userId_idx",
-                  "unique": false
-                }
-              ],
-              "primaryKey": {
-                "columns": [
-                  "id"
-                ]
-              },
-              "uniques": [
-                {
-                  "columns": [
-                    "provider",
-                    "subject"
-                  ]
-                },
-                {
-                  "columns": [
-                    "userId",
-                    "provider"
-                  ]
-                }
-              ]
             },
             "CorrectionRequest": {
               "checks": [
@@ -1710,7 +1779,7 @@
               },
               "uniques": []
             },
-            "RefreshToken": {
+            "Session": {
               "columns": {
                 "createdAt": {
                   "codecId": "pg/timestamptz-string@1",
@@ -1726,24 +1795,24 @@
                   "nativeType": "timestamptz",
                   "nullable": false
                 },
-                "familyId": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
                 "id": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
                 },
-                "revokedAt": {
-                  "codecId": "pg/timestamptz-string@1",
-                  "nativeType": "timestamptz",
-                  "nullable": true
-                },
-                "tokenHash": {
+                "ipAddress": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
+                  "nullable": true
+                },
+                "token": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
                   "nullable": false
                 },
                 "userAgent": {
@@ -1765,7 +1834,7 @@
                       "userId"
                     ],
                     "namespaceId": "public",
-                    "tableName": "RefreshToken"
+                    "tableName": "Session"
                   },
                   "target": {
                     "columns": [
@@ -1781,8 +1850,8 @@
                   "columns": [
                     "userId"
                   ],
-                  "name": "RefreshToken_userId_idx_a489d58a",
-                  "prefix": "RefreshToken_userId_idx",
+                  "name": "Session_userId_idx_a489d58a",
+                  "prefix": "Session_userId_idx",
                   "unique": false
                 }
               ],
@@ -1794,7 +1863,7 @@
               "uniques": [
                 {
                   "columns": [
-                    "tokenHash"
+                    "token"
                   ]
                 }
               ]
@@ -2092,6 +2161,15 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "emailVerified": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
                 "firstName": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -2102,15 +2180,20 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "image": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "lastName": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
                 },
-                "passwordHash": {
+                "name": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
-                  "nullable": true
+                  "nullable": false
                 },
                 "phone": {
                   "codecId": "pg/text@1",
@@ -2162,14 +2245,7 @@
                 }
               ]
             },
-            "UserToken": {
-              "checks": [
-                {
-                  "expression": "\"purpose\" IN ('invitation', 'password_reset')",
-                  "name": "UserToken_purpose_check_d74ade68",
-                  "prefix": "UserToken_purpose_check"
-                }
-              ],
+            "Verification": {
               "columns": {
                 "createdAt": {
                   "codecId": "pg/timestamptz-string@1",
@@ -2190,59 +2266,30 @@
                   "nativeType": "text",
                   "nullable": false
                 },
-                "purpose": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false,
-                  "valueSet": {
-                    "entityKind": "valueSet",
-                    "entityName": "TokenPurpose",
-                    "namespaceId": "public",
-                    "plane": "storage"
-                  }
-                },
-                "tokenHash": {
+                "identifier": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
                 },
-                "usedAt": {
+                "updatedAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "nativeType": "timestamptz",
-                  "nullable": true
+                  "nullable": false
                 },
-                "userId": {
+                "value": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
                 }
               },
-              "foreignKeys": [
-                {
-                  "onDelete": "cascade",
-                  "source": {
-                    "columns": [
-                      "userId"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "UserToken"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "User"
-                  }
-                }
-              ],
+              "foreignKeys": [],
               "indexes": [
                 {
                   "columns": [
-                    "userId"
+                    "identifier"
                   ],
-                  "name": "UserToken_userId_idx_a489d58a",
-                  "prefix": "UserToken_userId_idx",
+                  "name": "Verification_identifier_idx_79a0dbb3",
+                  "prefix": "Verification_identifier_idx",
                   "unique": false
                 }
               ],
@@ -2251,13 +2298,7 @@
                   "id"
                 ]
               },
-              "uniques": [
-                {
-                  "columns": [
-                    "tokenHash"
-                  ]
-                }
-              ]
+              "uniques": []
             },
             "WorkSchedule": {
               "columns": {
@@ -2363,13 +2404,6 @@
                 "correction"
               ]
             },
-            "TokenPurpose": {
-              "kind": "valueSet",
-              "values": [
-                "invitation",
-                "password_reset"
-              ]
-            },
             "UserRole": {
               "kind": "valueSet",
               "values": [
@@ -2383,10 +2417,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "beeb04ec1ec339ac8521662b6f1bc93f575fb03376611a9d38ea87ae8a6cd1db"
+    "storageHash": "035a7af74e63d9fdf0f1e48dd6cccbeb7f9b81e0935b76d37743f46dbe111898"
   },
   "execution": {
-    "executionHash": "c9bcd95317d823dde07afbf9f3cf0c0c883a01b9425278381da31890936cf7d9",
+    "executionHash": "193e5c94294232eda6c9efa7ac167a340260b13a3ba703e22607b1b627e83c58",
     "mutations": {
       "defaults": [
         {
@@ -2396,17 +2430,6 @@
           },
           "ref": {
             "entry": "AuditLog",
-            "field": "id",
-            "namespace": "public"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "uuidv4",
-            "kind": "generator"
-          },
-          "ref": {
-            "entry": "AuthIdentity",
             "field": "id",
             "namespace": "public"
           }
@@ -2428,17 +2451,6 @@
             "kind": "generator"
           },
           "ref": {
-            "entry": "RefreshToken",
-            "field": "id",
-            "namespace": "public"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "uuidv4",
-            "kind": "generator"
-          },
-          "ref": {
             "entry": "Team",
             "field": "id",
             "namespace": "public"
@@ -2508,17 +2520,6 @@
           "ref": {
             "entry": "User",
             "field": "updatedAt",
-            "namespace": "public"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "uuidv4",
-            "kind": "generator"
-          },
-          "ref": {
-            "entry": "UserToken",
-            "field": "id",
             "namespace": "public"
           }
         },
