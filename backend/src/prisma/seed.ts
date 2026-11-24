@@ -1,8 +1,10 @@
 import { config } from 'dotenv';
 import { randomUUID } from 'node:crypto';
+import { hashPassword } from 'better-auth/crypto';
 import postgres from '@prisma/orm-postgres/runtime';
 import type { Contract } from './contract.d';
 import contractJson from './contract.json' with { type: 'json' };
+import { fullName } from '../users/identity.ts';
 
 config({ path: ['.env', '../.env'], quiet: true });
 
@@ -11,6 +13,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const TZ = 'Europe/Paris';
+const DEMO_PASSWORD = 'demo1234';
 const DOMAIN = 'trinity-market.example';
 const WEEKS = 4;
 
@@ -98,6 +101,13 @@ const email = (p: { firstName: string; lastName: string }) =>
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase();
+const identity = (p: { firstName: string; lastName: string }) => ({
+  email: email(p),
+  emailVerified: true,
+  name: fullName(p.firstName, p.lastName),
+  firstName: p.firstName,
+  lastName: p.lastName,
+});
 
 function demoDays(today: string): string[] {
   const d = new Date(`${today}T00:00:00Z`);
@@ -210,15 +220,15 @@ async function main() {
       typeof orm.CorrectionRequest.createAndCount
     >[0][number][] = [];
     let schedules = 0;
+    const userIds: string[] = [];
 
     for (const team of TEAMS) {
       const manager = await orm.User.create({
-        email: email(team.manager),
-        firstName: team.manager.firstName,
-        lastName: team.manager.lastName,
+        ...identity(team.manager),
         role: 'manager',
         weeklyHours: 39,
       });
+      userIds.push(manager.id);
       const created = await orm.Team.create({
         name: team.name,
         description: team.description,
@@ -227,12 +237,11 @@ async function main() {
 
       for (const person of team.members) {
         const user = await orm.User.create({
-          email: email(person),
-          firstName: person.firstName,
-          lastName: person.lastName,
+          ...identity(person),
           phone: `+336${between(10000000, 99999999)}`,
           weeklyHours: WEEKLY_HOURS[person.profile],
         });
+        userIds.push(user.id);
         await orm.TeamMember.create({ teamId: created.id, userId: user.id });
 
         const schedule = SCHEDULES[person.profile];
@@ -293,6 +302,19 @@ async function main() {
       }
     }
 
+    // Same Better Auth credential for every demo user.
+    const password = await hashPassword(DEMO_PASSWORD);
+    const updatedAt = new Date(now).toISOString();
+    await orm.Account.createAndCount(
+      userIds.map((userId) => ({
+        id: randomUUID(),
+        userId,
+        accountId: userId,
+        providerId: 'credential',
+        password,
+        updatedAt,
+      })),
+    );
     const timeEntries = await orm.TimeEntry.createAndCount(entries);
     await orm.CorrectionRequest.createAndCount(corrections);
 
@@ -300,7 +322,7 @@ async function main() {
       `Seed OK: ${emails.length} users (${TEAMS.length} managers), ` +
       `${TEAMS.length} teams, ${schedules} schedule slots, ` +
       `${timeEntries} time entries, ${corrections.length} correction requests ` +
-      `from ${days[0]} to ${today}.`
+      `from ${days[0]} to ${today}. Password for every demo user: ${DEMO_PASSWORD}`
     );
   });
 }

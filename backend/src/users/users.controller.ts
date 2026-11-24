@@ -1,3 +1,4 @@
+import { Roles } from '@thallesp/nestjs-better-auth';
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { UsersService } from './users.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
@@ -16,6 +17,7 @@ export class UsersController {
     return this.usersService.findAll(page, pageSize, q);
   }
 
+  @Roles(['manager'])
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
@@ -26,11 +28,13 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
+  @Roles(['manager'])
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 
+  @Roles(['manager'])
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);

@@ -14,11 +14,6 @@ enum EntrySource {
   correction
 }
 
-enum TokenPurpose {
-  invitation
-  password_reset
-}
-
 enum CorrectionStatus {
   pending
   approved
@@ -28,7 +23,9 @@ enum CorrectionStatus {
 model User {
   id            String      @id @default(uuid())
   email         String      @unique
-  passwordHash  String?
+  emailVerified Boolean     @default(false)
+  name          String
+  image         String?
   firstName     String
   lastName      String
   phone         String?
@@ -44,9 +41,8 @@ model User {
   teamMemberships     TeamMember[]
   timeEntries         TimeEntry[]
   workSchedules       WorkSchedule[]
-  authIdentities      AuthIdentity[]
-  refreshTokens       RefreshToken[]
-  userTokens          UserToken[]
+  sessions            Session[]
+  accounts            Account[]
   requestedCorrections CorrectionRequest[] @relation("CorrectionRequester")
   reviewedCorrections  CorrectionRequest[] @relation("CorrectionReviewer")
   auditLogs           AuditLog[]
@@ -75,39 +71,52 @@ model TeamMember {
   @@id([teamId, userId])
 }
 
-model AuthIdentity {
-  id        String   @id @default(uuid())
+// Better Auth tables: field names follow its core schema, do not rename.
+model Session {
+  id        String   @id
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  provider  String   @default("microsoft")
-  subject   String
-  createdAt TimestamptzString @default(now())
-
-  @@unique([provider, subject])
-  @@unique([userId, provider])
-}
-
-model RefreshToken {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String   @unique
-  familyId  String
+  token     String   @unique
   expiresAt TimestamptzString
-  revokedAt TimestamptzString?
+  ipAddress String?
   userAgent String?
   createdAt TimestamptzString @default(now())
+  updatedAt TimestamptzString
+
+  @@index([userId])
 }
 
-model UserToken {
-  id        String       @id @default(uuid())
-  userId    String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  purpose   TokenPurpose
-  tokenHash String       @unique
-  expiresAt TimestamptzString
-  usedAt    TimestamptzString?
-  createdAt TimestamptzString @default(now())
+// providerId "credential" holds the password hash, "microsoft" the Entra oid in accountId.
+model Account {
+  id                    String   @id
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  TimestamptzString?
+  refreshTokenExpiresAt TimestamptzString?
+  scope                 String?
+  password              String?
+  createdAt             TimestamptzString @default(now())
+  updatedAt             TimestamptzString
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+// Invitation and password reset tokens.
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  TimestamptzString
+  createdAt  TimestamptzString @default(now())
+  updatedAt  TimestamptzString
+
+  @@index([identifier])
 }
 
 model WorkSchedule {
