@@ -62,6 +62,23 @@ docker compose exec backend npm run lint
 - **Module introuvable après `git pull`** : `docker compose up --build -V` (le `node_modules` du conteneur est un volume anonyme).
 - **Le backend ne démarre pas** : vérifier que `.env` existe et que les URLs Neon sont valides.
 
+## Miroir de la CI
+
+Les crédits GitHub Actions de l'organisation sont épuisés. La CI tourne donc sur un miroir personnel : [StazzCode/T-DEV-700-LIL-7-1-time_manager-8](https://github.com/StazzCode/T-DEV-700-LIL-7-1-time_manager-8). Le dépôt de l'organisation reste la référence, le miroir ne sert qu'à exécuter la CI.
+
+Pour qu'un `git push` mette à jour les deux dépôts, configurer `origin` une seule fois :
+
+```bash
+git remote set-url --add --push origin https://github.com/EpitechMscProPromo2028/T-DEV-700-LIL-7-1-time_manager-8.git
+git remote set-url --add --push origin https://github.com/StazzCode/T-DEV-700-LIL-7-1-time_manager-8.git
+git remote -v   # origin doit apparaître en fetch (org) et en push (org + miroir)
+```
+
+- Il faut un accès en écriture au miroir (à demander à StazzCode, Settings > Collaborators). Sans lui, le push vers le miroir est refusé, mais celui vers l'organisation est déjà passé.
+- Les checks de la PR sur l'organisation restent en échec : lire le résultat de la CI dans l'onglet Actions du miroir.
+- Un merge fait depuis l'interface GitHub de l'organisation n'est pas répercuté sur le miroir. Après un merge : `git pull`, puis `git push`.
+- Le miroir est public : aucun secret dans le code ni dans l'historique.
+
 ## Build de production
 
 Les Dockerfiles ont une cible `prod` (non utilisée par `docker-compose.yml`) :
